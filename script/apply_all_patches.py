@@ -1,35 +1,33 @@
 #!/usr/bin/env python
 
+import argparse
+import json
+import os
+
 from lib import git
 from lib.patches import patch_from_dir
 
 
-patch_dirs = {
-  'src/electron/patches/common/chromium':
-    'src',
-
-  'src/electron/patches/common/boringssl':
-    'src/third_party/boringssl/src',
-
-  'src/electron/patches/common/ffmpeg':
-    'src/third_party/ffmpeg',
-
-  'src/electron/patches/common/skia':
-    'src/third_party/skia',
-
-  'src/electron/patches/common/v8':
-    'src/v8',
-}
-
-
 def apply_patches(dirs):
-  for patch_dir, repo in dirs.iteritems():
-    git.am(repo=repo, patch_data=patch_from_dir(patch_dir),
+  threeway = os.environ.get("ELECTRON_USE_THREE_WAY_MERGE_FOR_PATCHES")
+  for patch_dir, repo in dirs.items():
+    git.import_patches(repo=repo, patch_data=patch_from_dir(patch_dir),
+      threeway=threeway is not None,
       committer_name="Electron Scripts", committer_email="scripts@electron")
 
 
+def parse_args():
+  parser = argparse.ArgumentParser(description='Apply Electron patches')
+  parser.add_argument('config', nargs='+',
+                      type=argparse.FileType('r'),
+                      help='patches\' config(s) in the JSON format')
+  return parser.parse_args()
+
+
 def main():
-  apply_patches(patch_dirs)
+  configs = parse_args().config
+  for config_json in configs:
+    apply_patches(json.load(config_json))
 
 
 if __name__ == '__main__':

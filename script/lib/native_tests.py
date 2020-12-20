@@ -11,6 +11,11 @@ PYYAML_LIB_DIR = os.path.join(VENDOR_DIR, 'pyyaml', 'lib')
 sys.path.append(PYYAML_LIB_DIR)
 import yaml  #pylint: disable=wrong-import-position,wrong-import-order
 
+try:
+  basestring        # Python 2
+except NameError:   # Python 3
+  basestring = str  # pylint: disable=redefined-builtin
+
 
 class Verbosity:
   CHATTY = 'chatty'  # stdout and stderr
@@ -42,6 +47,12 @@ class Verbosity:
     """Less or equal"""
     a_index, b_index = Verbosity.__get_indices(a, b)
     return a_index <= b_index
+
+
+class DisabledTestsPolicy:
+  DISABLE = 'disable'  # Disabled tests are disabled. Wow. Much sense.
+  ONLY = 'only'  # Only disabled tests should be run.
+  INCLUDE = 'include'  # Do not disable any tests.
 
 
 class Platform:
@@ -88,7 +99,7 @@ class TestsList():
     return supported_binaries
 
   def run(self, binaries, output_dir=None, verbosity=Verbosity.CHATTY,
-      run_only_disabled_tests=False):
+      disabled_tests_policy=DisabledTestsPolicy.DISABLE):
     # Don't run anything twice.
     binaries = set(binaries)
 
@@ -106,19 +117,19 @@ class TestsList():
                 binary_name, Platform.get_current()))
 
     suite_returncode = sum(
-        [self.__run(binary, output_dir, verbosity, run_only_disabled_tests)
+        [self.__run(binary, output_dir, verbosity, disabled_tests_policy)
         for binary in binaries])
     return suite_returncode
 
   def run_only(self, binary_name, output_dir=None, verbosity=Verbosity.CHATTY,
-      run_only_disabled_tests=False):
+      disabled_tests_policy=DisabledTestsPolicy.DISABLE):
     return self.run([binary_name], output_dir, verbosity,
-                    run_only_disabled_tests)
+                    disabled_tests_policy)
 
   def run_all(self, output_dir=None, verbosity=Verbosity.CHATTY,
-      run_only_disabled_tests=False):
+      disabled_tests_policy=DisabledTestsPolicy.DISABLE):
     return self.run(self.get_for_current_platform(), output_dir, verbosity,
-                    run_only_disabled_tests)
+                    disabled_tests_policy)
 
   @staticmethod
   def __get_tests_list(config_path):
@@ -200,7 +211,7 @@ class TestsList():
     return (binary_name, test_data)
 
   def __run(self, binary_name, output_dir, verbosity,
-      run_only_disabled_tests):
+      disabled_tests_policy):
     binary_path = os.path.join(self.tests_dir, binary_name)
     test_binary = TestBinary(binary_path)
 
@@ -208,12 +219,14 @@ class TestsList():
     included_tests = []
     excluded_tests = test_data['excluded_tests']
 
-    if run_only_disabled_tests and len(excluded_tests) == 0:
-      # There is nothing to run.
-      return 0
-
-    if run_only_disabled_tests:
+    if disabled_tests_policy == DisabledTestsPolicy.ONLY:
+      if len(excluded_tests) == 0:
+        # There is nothing to run.
+        return 0
       included_tests, excluded_tests = excluded_tests, included_tests
+
+    if disabled_tests_policy == DisabledTestsPolicy.INCLUDE:
+      excluded_tests = []
 
     output_file_path = TestsList.__get_output_path(binary_name, output_dir)
 

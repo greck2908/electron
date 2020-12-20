@@ -4,6 +4,16 @@
 
 Process: [Renderer](../glossary.md#renderer-process)
 
+> ⚠️ WARNING ⚠️
+> The `remote` module is [deprecated](https://github.com/electron/electron/issues/21408).
+> Instead of `remote`, use [`ipcRenderer`](ipc-renderer.md) and
+> [`ipcMain`](ipc-main.md).
+>
+> Read more about why the `remote` module is deprecated [here](https://medium.com/@nornagon/electrons-remote-module-considered-harmful-70d69500f31).
+>
+> If you still want to use `remote` despite the performance and security
+> concerns, see [@electron/remote](https://github.com/electron/remote).
+
 The `remote` module provides a simple way to do inter-process communication
 (IPC) between the renderer process (web page) and the main process.
 
@@ -17,16 +27,17 @@ renderer process:
 
 ```javascript
 const { BrowserWindow } = require('electron').remote
-let win = new BrowserWindow({ width: 800, height: 600 })
+const win = new BrowserWindow({ width: 800, height: 600 })
 win.loadURL('https://github.com')
 ```
 
 **Note:** For the reverse (access the renderer process from the main process),
-you can use [webContents.executeJavaScript](web-contents.md#contentsexecutejavascriptcode-usergesture-callback).
+you can use [webContents.executeJavaScript](web-contents.md#contentsexecutejavascriptcode-usergesture).
 
 **Note:** The remote module can be disabled for security reasons in the following contexts:
-- [`BrowserWindow`](browser-window.md) - by setting the `enableRemoteModule` option to `false`.
-- [`<webview>`](webview-tag.md) - by setting the `enableremotemodule` attribute to `false`.
+
+* [`BrowserWindow`](browser-window.md) - by setting the `enableRemoteModule` option to `false`.
+* [`<webview>`](webview-tag.md) - by setting the `enableremotemodule` attribute to `false`.
 
 ## Remote Objects
 
@@ -140,42 +151,6 @@ console.log(app)
 
 The `remote` module has the following methods:
 
-### `remote.require(module)`
-
-* `module` String
-
-Returns `any` - The object returned by `require(module)` in the main process.
-Modules specified by their relative path will resolve relative to the entrypoint
-of the main process.
-
-e.g.
-
-```sh
-project/
-├── main
-│   ├── foo.js
-│   └── index.js
-├── package.json
-└── renderer
-    └── index.js
-```
-
-```js
-// main process: main/index.js
-const { app } = require('electron')
-app.on('ready', () => { /* ... */ })
-```
-
-```js
-// some relative module: main/foo.js
-module.exports = 'bar'
-```
-
-```js
-// renderer process: renderer/index.js
-const foo = require('electron').remote.require('./foo') // bar
-```
-
 ### `remote.getCurrentWindow()`
 
 Returns [`BrowserWindow`](browser-window.md) - The window to which this web page
@@ -199,9 +174,43 @@ process.
 
 ## Properties
 
-### `remote.process`
+### `remote.require`
 
-The `process` object in the main process. This is the same as
+A `NodeJS.Require` function equivalent to `require(module)` in the main process.
+Modules specified by their relative path will resolve relative to the entrypoint
+of the main process.
+
+e.g.
+
+```sh
+project/
+├── main
+│   ├── foo.js
+│   └── index.js
+├── package.json
+└── renderer
+    └── index.js
+```
+
+```js
+// main process: main/index.js
+const { app } = require('electron')
+app.whenReady().then(() => { /* ... */ })
+```
+
+```js
+// some relative module: main/foo.js
+module.exports = 'bar'
+```
+
+```js
+// renderer process: renderer/index.js
+const foo = require('electron').remote.require('./foo') // bar
+```
+
+### `remote.process` _Readonly_
+
+A `NodeJS.Process` object.  The `process` object in the main process. This is the same as
 `remote.getGlobal('process')` but is cached.
 
 [rmi]: https://en.wikipedia.org/wiki/Java_remote_method_invocation
