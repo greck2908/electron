@@ -1,36 +1,37 @@
 {
     "sid_amd64": {
-        "Sha1Sum": "d0e41d72491213f37d9e0a59aab2e8b5c4c5edba",
+        "Revision": "227023dae63c074376c4399a6039f93ae3dd426d",
+        "Sha1Sum": "6da2a26a1c64d93e6702e771699558049e1532e5",
         "SysrootDir": "debian_sid_amd64-sysroot",
         "Tarball": "debian_sid_amd64_sysroot.tar.xz"
     },
     "sid_arm": {
-        "Sha1Sum": "e42ced6f8e348e475b7ea0a61b3e3af9c8e2f890",
+        "Revision": "227023dae63c074376c4399a6039f93ae3dd426d",
+        "Sha1Sum": "25f744e0c4feec7b9a401cee221c90777a9c0086",
         "SysrootDir": "debian_sid_arm-sysroot",
         "Tarball": "debian_sid_arm_sysroot.tar.xz"
     },
     "sid_arm64": {
-        "Sha1Sum": "b1cae89cb6e71ea132ccdfe3d3ecf709d356a715",
+        "Revision": "227023dae63c074376c4399a6039f93ae3dd426d",
+        "Sha1Sum": "ac0c62353c6c480e9e8a2cf526000c39b82d1c1b",
         "SysrootDir": "debian_sid_arm64-sysroot",
         "Tarball": "debian_sid_arm64_sysroot.tar.xz"
     },
-    "sid_armel": {
-        "Sha1Sum": "1cbeb754d41a4a5da2be578288461d1ac9a64f1b",
-        "SysrootDir": "debian_sid_armel-sysroot",
-        "Tarball": "debian_sid_armel_sysroot.tar.xz"
-    },
     "sid_i386": {
-        "Sha1Sum": "5702f88f06b5994e0cc9fd64cdcaf642c1aa7f40",
+        "Revision": "227023dae63c074376c4399a6039f93ae3dd426d",
+        "Sha1Sum": "7f1130ab0c0b1b931c12104a36554c6a19a75622",
         "SysrootDir": "debian_sid_i386-sysroot",
         "Tarball": "debian_sid_i386_sysroot.tar.xz"
     },
     "sid_mips": {
-        "Sha1Sum": "d6e8af2aa0c560b704a7bbcc0b1f3376c5b9a54a",
+        "Revision": "227023dae63c074376c4399a6039f93ae3dd426d",
+        "Sha1Sum": "141d07172ff7307cc9461f05b9c57a2a3fb300d8",
         "SysrootDir": "debian_sid_mips-sysroot",
         "Tarball": "debian_sid_mips_sysroot.tar.xz"
     },
     "sid_mips64el": {
-        "Sha1Sum": "1b952bf7971332eaba9e83f71c0515b057ef76be",
+        "Revision": "227023dae63c074376c4399a6039f93ae3dd426d",
+        "Sha1Sum": "e8a5355554eddac7cf1c9ea9ab83de2f15d6a45c",
         "SysrootDir": "debian_sid_mips64el-sysroot",
         "Tarball": "debian_sid_mips64el_sysroot.tar.xz"
     }

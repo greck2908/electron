@@ -1,114 +1,173 @@
-const { expect } = require('chai');
-const { webFrame } = require('electron');
+const assert = require('assert')
+const chai = require('chai')
+const dirtyChai = require('dirty-chai')
+const path = require('path')
+const { closeWindow } = require('./window-helpers')
+const { remote, webFrame } = require('electron')
+const { BrowserWindow, protocol, ipcMain } = remote
+const { emittedOnce } = require('./events-helpers')
+
+const { expect } = chai
+chai.use(dirtyChai)
+
+/* Most of the APIs here don't use standard callbacks */
+/* eslint-disable standard/no-callback-literal */
 
 describe('webFrame module', function () {
-  it('top is self for top frame', () => {
-    expect(webFrame.top.context).to.equal(webFrame.context);
-  });
+  const fixtures = path.resolve(__dirname, 'fixtures')
+  let w = null
 
-  it('opener is null for top frame', () => {
-    expect(webFrame.opener).to.be.null();
-  });
+  afterEach(function () {
+    return closeWindow(w).then(function () { w = null })
+  })
 
-  it('firstChild is null for top frame', () => {
-    expect(webFrame.firstChild).to.be.null();
-  });
+  describe('webFrame.registerURLSchemeAsPrivileged', function () {
+    it('supports fetch api by default', function (done) {
+      const url = 'file://' + fixtures + '/assets/logo.png'
+      window.fetch(url).then(function (response) {
+        assert(response.ok)
+        done()
+      }).catch(function (err) {
+        done('unexpected error : ' + err)
+      })
+    })
 
-  it('getFrameForSelector() does not crash when not found', () => {
-    expect(webFrame.getFrameForSelector('unexist-selector')).to.be.null();
-  });
+    it('allows CORS requests by default', function (done) {
+      allowsCORSRequests(200, `<html>
+        <script>
+        const {ipcRenderer, webFrame} = require('electron')
+        webFrame.registerURLSchemeAsPrivileged('cors1')
+        fetch('cors1://myhost').then(function (response) {
+          ipcRenderer.send('response', response.status)
+        }).catch(function (response) {
+          ipcRenderer.send('response', 'failed')
+        })
+        </script>
+      </html>`, done)
+    })
 
-  it('findFrameByName() does not crash when not found', () => {
-    expect(webFrame.findFrameByName('unexist-name')).to.be.null();
-  });
+    it('allows CORS and fetch requests when specified', function (done) {
+      allowsCORSRequests(200, `<html>
+        <script>
+        const {ipcRenderer, webFrame} = require('electron')
+        webFrame.registerURLSchemeAsPrivileged('cors2', { supportFetchAPI: true, corsEnabled: true })
+        fetch('cors2://myhost').then(function (response) {
+          ipcRenderer.send('response', response.status)
+        }).catch(function (response) {
+          ipcRenderer.send('response', 'failed')
+        })
+        </script>
+      </html>`, done)
+    })
 
-  it('findFrameByRoutingId() does not crash when not found', () => {
-    expect(webFrame.findFrameByRoutingId(-1)).to.be.null();
-  });
+    it('allows CORS and fetch requests when half-specified', function (done) {
+      allowsCORSRequests(200, `<html>
+        <script>
+        const {ipcRenderer, webFrame} = require('electron')
+        webFrame.registerURLSchemeAsPrivileged('cors3', { supportFetchAPI: true })
+        fetch('cors3://myhost').then(function (response) {
+          ipcRenderer.send('response', response.status)
+        }).catch(function (response) {
+          ipcRenderer.send('response', 'failed')
+        })
+        </script>
+      </html>`, done)
+    })
 
-  describe('executeJavaScript', () => {
-    let childFrameElement, childFrame;
+    it('disallows CORS, but allows fetch requests, when specified', function (done) {
+      allowsCORSRequests('failed', `<html>
+        <script>
+        const {ipcRenderer, webFrame} = require('electron')
+        webFrame.registerURLSchemeAsPrivileged('cors4', { supportFetchAPI: true, corsEnabled: false })
+        fetch('cors4://myhost').then(function (response) {
+          ipcRenderer.send('response', response.status)
+        }).catch(function (response) {
+          ipcRenderer.send('response', 'failed')
+        })
+        </script>
+      </html>`, done)
+    })
 
-    before(() => {
-      childFrameElement = document.createElement('iframe');
-      document.body.appendChild(childFrameElement);
-      childFrame = webFrame.firstChild;
-    });
+    it('allows CORS, but disallows fetch requests, when specified', function (done) {
+      allowsCORSRequests('failed', `<html>
+        <script>
+        const {ipcRenderer, webFrame} = require('electron')
+        webFrame.registerURLSchemeAsPrivileged('cors5', { supportFetchAPI: false, corsEnabled: true })
+        fetch('cors5://myhost').then(function (response) {
+          ipcRenderer.send('response', response.status)
+        }).catch(function (response) {
+          ipcRenderer.send('response', 'failed')
+        })
+        </script>
+      </html>`, done)
+    })
 
-    after(() => {
-      childFrameElement.remove();
-    });
+    let runNumber = 1
+    function allowsCORSRequests (expected, content, done) {
+      const standardScheme = remote.getGlobal('standardScheme') + runNumber
+      const corsScheme = 'cors' + runNumber
+      runNumber++
 
-    it('executeJavaScript() yields results via a promise and a sync callback', async () => {
-      let callbackResult, callbackError;
+      const url = standardScheme + '://fake-host'
+      w = new BrowserWindow({ show: false })
+      after(function (done) {
+        protocol.unregisterProtocol(corsScheme, function () {
+          protocol.unregisterProtocol(standardScheme, function () {
+            done()
+          })
+        })
+      })
 
-      const executeJavaScript = childFrame
-        .executeJavaScript('1 + 1', (result, error) => {
-          callbackResult = result;
-          callbackError = error;
-        });
+      const handler = function (request, callback) {
+        callback({ data: content, mimeType: 'text/html' })
+      }
+      protocol.registerStringProtocol(standardScheme, handler, function (error) {
+        if (error) return done(error)
+      })
 
-      expect(callbackResult).to.equal(2);
-      expect(callbackError).to.be.undefined();
+      protocol.registerStringProtocol(corsScheme, function (request, callback) {
+        callback('')
+      }, function (error) {
+        if (error) return done(error)
+        ipcMain.once('response', function (event, status) {
+          assert.strictEqual(status, expected)
+          done()
+        })
+        w.loadURL(url)
+      })
+    }
+  })
 
-      const promiseResult = await executeJavaScript;
-      expect(promiseResult).to.equal(2);
-    });
+  it('supports setting the visual and layout zoom level limits', function () {
+    assert.doesNotThrow(function () {
+      webFrame.setVisualZoomLevelLimits(1, 50)
+      webFrame.setLayoutZoomLevelLimits(0, 25)
+    })
+  })
 
-    it('executeJavaScriptInIsolatedWorld() yields results via a promise and a sync callback', async () => {
-      let callbackResult, callbackError;
+  it('calls a spellcheck provider', async () => {
+    w = new BrowserWindow({ show: false })
+    w.loadFile(path.join(fixtures, 'pages', 'webframe-spell-check.html'))
+    await emittedOnce(w.webContents, 'did-finish-load')
+    w.focus()
+    await w.webContents.executeJavaScript('document.querySelector("input").focus()', true)
 
-      const executeJavaScriptInIsolatedWorld = childFrame
-        .executeJavaScriptInIsolatedWorld(999, [{ code: '1 + 1' }], (result, error) => {
-          callbackResult = result;
-          callbackError = error;
-        });
-
-      expect(callbackResult).to.equal(2);
-      expect(callbackError).to.be.undefined();
-
-      const promiseResult = await executeJavaScriptInIsolatedWorld;
-      expect(promiseResult).to.equal(2);
-    });
-
-    it('executeJavaScript() yields errors via a promise and a sync callback', async () => {
-      let callbackResult, callbackError;
-
-      const executeJavaScript = childFrame
-        .executeJavaScript('thisShouldProduceAnError()', (result, error) => {
-          callbackResult = result;
-          callbackError = error;
-        });
-
-      expect(callbackResult).to.be.undefined();
-      expect(callbackError).to.be.an('error');
-
-      await expect(executeJavaScript).to.eventually.be.rejected('error is expected');
-    });
-
-    // executeJavaScriptInIsolatedWorld is failing to detect exec errors and is neither
-    // rejecting nor passing the error to the callback. This predates the reintroduction
-    // of the callback so will not be fixed as part of the callback PR
-    // if/when this is fixed the test can be uncommented.
-    //
-    // it('executeJavaScriptInIsolatedWorld() yields errors via a promise and a sync callback', done => {
-    //   let callbackResult, callbackError
-    //
-    //   const executeJavaScriptInIsolatedWorld = childFrame
-    //     .executeJavaScriptInIsolatedWorld(999, [{ code: 'thisShouldProduceAnError()' }], (result, error) => {
-    //       callbackResult = result
-    //       callbackError = error
-    //     });
-    //
-    //   expect(callbackResult).to.be.undefined()
-    //   expect(callbackError).to.be.an('error')
-    //
-    //   expect(executeJavaScriptInIsolatedWorld).to.eventually.be.rejected('error is expected');
-    // })
-
-    it('executeJavaScript(InIsolatedWorld) can be used without a callback', async () => {
-      expect(await webFrame.executeJavaScript('1 + 1')).to.equal(2);
-      expect(await webFrame.executeJavaScriptInIsolatedWorld(999, [{ code: '1 + 1' }])).to.equal(2);
-    });
-  });
-});
+    const spellCheckerFeedback =
+      new Promise((resolve, reject) => {
+        ipcMain.on('spec-spell-check', (e, words, callback) => {
+          if (words.length === 2) {
+            // The promise is resolved only after this event is received twice
+            // Array contains only 1 word first time and 2 the next time
+            resolve([words, callback])
+          }
+        })
+      })
+    const inputText = 'spleling test '
+    for (const keyCode of inputText) {
+      w.webContents.sendInputEvent({ type: 'char', keyCode })
+    }
+    const [words, callback] = await spellCheckerFeedback
+    expect(words).to.deep.equal(['spleling', 'test'])
+    expect(callback).to.be.true()
+  })
+})

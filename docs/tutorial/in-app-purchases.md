@@ -3,16 +3,15 @@
 ## Preparing
 
 ### Paid Applications Agreement
-
-If you haven't already, you’ll need to sign the Paid Applications Agreement and set up your banking and tax information in iTunes Connect.
+If you haven't already, you’ll need to sign the Paid Applications Agreement and set up your banking and tax information in iTunes Connect. 
 
 [iTunes Connect Developer Help: Agreements, tax, and banking overview](https://help.apple.com/itunes-connect/developer/#/devb6df5ee51)
 
 ### Create Your In-App Purchases
-
 Then, you'll need to configure your in-app purchases in iTunes Connect, and include details such as name, pricing, and description that highlights the features and functionality of your in-app purchase.
 
 [iTunes Connect Developer Help: Create an in-app purchase](https://help.apple.com/itunes-connect/developer/#/devae49fb316)
+
 
 ### Change the CFBundleIdentifier
 
@@ -23,13 +22,14 @@ To test In-App Purchase in development with Electron you'll have to change the `
 <string>com.example.app</string>
 ```
 
+
 ## Code example
 
 Here is an example that shows how to use In-App Purchases in Electron. You'll have to replace the product ids by the identifiers of the products created with iTunes Connect (the identifier of `com.example.app.product1` is `product1`). Note that you have to listen to the `transactions-updated` event as soon as possible in your app.
 
+
 ```javascript
-// Main process
-const { inAppPurchase } = require('electron')
+const { inAppPurchase } = require('electron').remote
 const PRODUCT_IDS = ['id1', 'id2']
 
 // Listen for transactions as soon as possible.
@@ -40,18 +40,18 @@ inAppPurchase.on('transactions-updated', (event, transactions) => {
 
   // Check each transaction.
   transactions.forEach(function (transaction) {
-    const payment = transaction.payment
+    var payment = transaction.payment
 
     switch (transaction.transactionState) {
       case 'purchasing':
         console.log(`Purchasing ${payment.productIdentifier}...`)
         break
+      case 'purchased':
 
-      case 'purchased': {
         console.log(`${payment.productIdentifier} purchased.`)
 
         // Get the receipt url.
-        const receiptURL = inAppPurchase.getReceiptURL()
+        let receiptURL = inAppPurchase.getReceiptURL()
 
         console.log(`Receipt URL: ${receiptURL}`)
 
@@ -65,8 +65,6 @@ inAppPurchase.on('transactions-updated', (event, transactions) => {
         inAppPurchase.finishTransactionByDate(transaction.transactionDate)
 
         break
-      }
-
       case 'failed':
 
         console.log(`Failed to purchase ${payment.productIdentifier}.`)
@@ -97,7 +95,7 @@ if (!inAppPurchase.canMakePayments()) {
 }
 
 // Retrieve and display the product descriptions.
-inAppPurchase.getProducts(PRODUCT_IDS).then(products => {
+inAppPurchase.getProducts(PRODUCT_IDS, (products) => {
   // Check the parameters.
   if (!Array.isArray(products) || products.length <= 0) {
     console.log('Unable to retrieve the product informations.')
@@ -105,16 +103,17 @@ inAppPurchase.getProducts(PRODUCT_IDS).then(products => {
   }
 
   // Display the name and price of each product.
-  products.forEach(product => {
+  products.forEach((product) => {
     console.log(`The price of ${product.localizedTitle} is ${product.formattedPrice}.`)
   })
 
   // Ask the user which product he/she wants to purchase.
-  const selectedProduct = products[0]
-  const selectedQuantity = 1
+  // ...
+  let selectedProduct = products[0]
+  let selectedQuantity = 1
 
   // Purchase the selected product.
-  inAppPurchase.purchaseProduct(selectedProduct.productIdentifier, selectedQuantity).then(isProductValid => {
+  inAppPurchase.purchaseProduct(selectedProduct.productIdentifier, selectedQuantity, (isProductValid) => {
     if (!isProductValid) {
       console.log('The product is not valid.')
       return

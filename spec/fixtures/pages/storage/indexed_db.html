@@ -1,8 +1,7 @@
 <script>
-  try {
-    let req = window.indexedDB.open('test')
-  } catch (e) {
+  let req = window.indexedDB.open('test')
+  req.onerror = function (event) {
     const {ipcRenderer} = require('electron')
-    ipcRenderer.send('indexed-db-response', e.message)
+    ipcRenderer.send('indexed-db-response', event.target.error.message)
   }
 </script>

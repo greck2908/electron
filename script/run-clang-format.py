@@ -15,7 +15,6 @@ import fnmatch
 import io
 import multiprocessing
 import os
-import posixpath
 import signal
 import subprocess
 import sys
@@ -23,7 +22,6 @@ import traceback
 import tempfile
 
 from functools import partial
-from lib.util import get_buildtools_executable
 
 DEFAULT_EXTENSIONS = 'c,h,C,H,cpp,hpp,cc,hh,c++,h++,cxx,hxx,mm'
 
@@ -120,14 +118,13 @@ def run_clang_format_diff(args, file_name):
         raise DiffError(str(exc))
     proc_stdout = proc.stdout
     proc_stderr = proc.stderr
-    if sys.version_info[0] == 3:
-        proc_stdout = proc_stdout.detach()
-        proc_stderr = proc_stderr.detach()
-    # make the pipes compatible with Python 3,
-    # reading lines should output unicode
-    encoding = 'utf-8'
-    proc_stdout = codecs.getreader(encoding)(proc_stdout)
-    proc_stderr = codecs.getreader(encoding)(proc_stderr)
+    if sys.version_info[0] < 3:
+        # make the pipes compatible with Python 3,
+        # reading lines should output unicode
+        encoding = 'utf-8'
+        proc_stdout = codecs.getreader(encoding)(proc_stdout)
+        proc_stderr = codecs.getreader(encoding)(proc_stderr)
+    # hopefully the stderr pipe won't get full and block the process
     outs = list(proc_stdout.readlines())
     errs = list(proc_stderr.readlines())
     proc.wait()
@@ -136,8 +133,6 @@ def run_clang_format_diff(args, file_name):
             proc.returncode, file_name), errs)
     if args.fix:
         return None, errs
-    if sys.platform == 'win32':
-        file_name = file_name.replace(os.sep, posixpath.sep)
     return make_diff(file_name, original, outs), errs
 
 
@@ -193,7 +188,7 @@ def main():
         '--clang-format-executable',
         metavar='EXECUTABLE',
         help='path to the clang-format executable',
-        default=get_buildtools_executable('clang-format'))
+        default='clang-format')
     parser.add_argument(
         '--extensions',
         help='comma separated list of file extensions (default: {})'.format(
@@ -334,8 +329,8 @@ def main():
                 if not args.quiet:
                     print_diff(outs, use_color=colored_stdout)
                     for line in outs:
-                        patch_file.write(line.encode('utf-8'))
-                    patch_file.write('\n'.encode('utf-8'))
+                        patch_file.write(line)
+                    patch_file.write('\n')
                 if retcode == ExitStatus.SUCCESS:
                     retcode = ExitStatus.DIFF
 

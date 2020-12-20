@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
 import os
 import sys
 import re
@@ -44,26 +43,18 @@ def getBrokenLinks(filepath):
     f = open(filepath, 'r')
     lines = f.readlines()
   except KeyboardInterrupt:
-    print('Keyboard interruption while parsing. Please try again.')
+    print('Keyboard interruption whle parsing. Please try again.')
   finally:
     f.close()
 
-  linkRegexLink = re.compile('\[(.*?)\]\((?P<link>(.*?))\)')
-  referenceLinkRegex = re.compile(
-      '^\s{0,3}\[.*?\]:\s*(?P<link>[^<\s]+|<[^<>\r\n]+>)'
-  )
+  regexLink = re.compile('\[(.*?)\]\((?P<links>(.*?))\)')
   links = []
   for line in lines:
-    matchLinks = linkRegexLink.search(line)
-    matchReferenceLinks = referenceLinkRegex.search(line)
+    matchLinks = regexLink.search(line)
     if matchLinks:
-      relativeLink = matchLinks.group('link')
+      relativeLink = matchLinks.group('links')
       if not str(relativeLink).startswith('http'):
         links.append(relativeLink)
-    if matchReferenceLinks:
-      referenceLink = matchReferenceLinks.group('link').strip('<>')
-      if not str(referenceLink).startswith('http'):
-        links.append(referenceLink)
 
   for link in links:
     sections = link.split('#')
@@ -80,7 +71,7 @@ def getBrokenLinks(filepath):
           newFile = open(tempFile, 'r')
           newLines = newFile.readlines()
         except KeyboardInterrupt:
-          print('Keyboard interruption while parsing. Please try again.')
+          print('Keyboard interruption whle parsing. Please try again.')
         finally:
           newFile.close()
 
@@ -95,35 +86,22 @@ def getBrokenLinks(filepath):
 
 
 def checkSections(sections, lines):
-  invalidCharsRegex = '[^A-Za-z0-9_ \-]'
-  sectionHeader = sections[1]
+  sectionHeader = sections[1].replace('-', '')
   regexSectionTitle = re.compile('# (?P<header>.*)')
   for line in lines:
     matchHeader = regexSectionTitle.search(line)
     if matchHeader:
-      # This does the following to slugify a header name:
-      #  * Replace whitespace with dashes
-      #  * Strip anything that's not alphanumeric or a dash
-      #  * Anything quoted with backticks (`) is an exception and will
-      #    not have underscores stripped
-      matchHeader = str(matchHeader.group('header')).replace(' ', '-')
-      matchHeader = ''.join(
-        map(
-          lambda match: re.sub(invalidCharsRegex, '', match[0])
-          + re.sub(invalidCharsRegex + '|_', '', match[1]),
-          re.findall('(`[^`]+`)|([^`]+)', matchHeader),
-        )
-      )
-      if matchHeader.lower() == sectionHeader:
-        return True
+     matchHeader = filter(str.isalnum, str(matchHeader.group('header')))
+     if matchHeader.lower() == sectionHeader:
+      return True
   return False
 
 
 def print_errors(filepath, brokenLink):
   if brokenLink:
-    print("File Location: " + filepath)
+    print "File Location: " + filepath
     for link in brokenLink:
-      print("\tBroken links: " + link)
+      print "\tBroken links: " + link
 
 
 if __name__ == '__main__':

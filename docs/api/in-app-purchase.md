@@ -21,40 +21,37 @@ Returns:
 
 The `inAppPurchase` module has the following methods:
 
-### `inAppPurchase.purchaseProduct(productID[, quantity])`
+
+### `inAppPurchase.purchaseProduct(productID, quantity, callback)`
 
 * `productID` String - The identifiers of the product to purchase. (The identifier of `com.example.app.product1` is `product1`).
 * `quantity` Integer (optional) - The number of items the user wants to purchase.
-
-Returns `Promise<Boolean>` - Returns `true` if the product is valid and added to the payment queue.
+* `callback` Function (optional) - The callback called when the payment is added to the PaymentQueue.
+    * `isProductValid` Boolean - Determine if the product is valid and added to the payment queue.
 
 You should listen for the `transactions-updated` event as soon as possible and certainly before you call `purchaseProduct`.
 
-### `inAppPurchase.getProducts(productIDs)`
+### `inAppPurchase.getProducts(productIDs, callback)`
 
 * `productIDs` String[] - The identifiers of the products to get.
-
-Returns `Promise<Product[]>` - Resolves with an array of [`Product`](structures/product.md) objects.
+* `callback` Function - The callback called with the products or an empty array if the products don't exist.
+    * `products` Product[] - Array of [`Product`](structures/product.md) objects
 
 Retrieves the product descriptions.
 
 ### `inAppPurchase.canMakePayments()`
 
-Returns `Boolean` - whether a user can make a payment.
-
-### `inAppPurchase.restoreCompletedTransactions()`
-
-Restores finished transactions. This method can be called either to install purchases on additional devices, or to restore purchases for an application that the user deleted and reinstalled.
-
-[The payment queue](https://developer.apple.com/documentation/storekit/skpaymentqueue?language=objc) delivers a new transaction for each previously completed transaction that can be restored. Each transaction includes a copy of the original transaction.
+Returns `Boolean`, whether a user can make a payment.
 
 ### `inAppPurchase.getReceiptURL()`
 
-Returns `String` - the path to the receipt.
+Returns `String`, the path to the receipt.
+
 
 ### `inAppPurchase.finishAllTransactions()`
 
 Completes all pending transactions.
+
 
 ### `inAppPurchase.finishTransactionByDate(date)`
 

@@ -15,7 +15,7 @@ calls, and other compiler optimizations. The only workaround is to build an
 unoptimized local build.
 
 The official symbol server URL for Electron is
-https://symbols.electronjs.org.
+https://electron-symbols.githubapp.com.
 You cannot visit this URL directly, you must add it to the symbol path of your
 debugging tool. In the examples below, a local cache directory is used to avoid
 repeatedly fetching the PDB from the server. Replace `c:\code\symbols` with an
@@ -30,7 +30,7 @@ directory on your computer, if you'd prefer a different location for downloaded
 symbols):
 
 ```powershell
-SRV*c:\code\symbols\*https://symbols.electronjs.org
+SRV*c:\code\symbols\*https://electron-symbols.githubapp.com
 ```
 
 Set this string as `_NT_SYMBOL_PATH` in the environment, using the Windbg menus,
@@ -38,13 +38,13 @@ or by typing the `.sympath` command. If you would like to get symbols from
 Microsoft's symbol server as well, you should list that first:
 
 ```powershell
-SRV*c:\code\symbols\*https://msdl.microsoft.com/download/symbols;SRV*c:\code\symbols\*https://symbols.electronjs.org
+SRV*c:\code\symbols\*https://msdl.microsoft.com/download/symbols;SRV*c:\code\symbols\*https://electron-symbols.githubapp.com
 ```
 
 ## Using the symbol server in Visual Studio
 
-![Tools -> Options](https://mdn.mozillademos.org/files/733/symbol-server-vc8express-menu.jpg)
-![Symbols Settings](https://mdn.mozillademos.org/files/2497/2005_options.gif)
+<img src='https://mdn.mozillademos.org/files/733/symbol-server-vc8express-menu.jpg'>
+<img src='https://mdn.mozillademos.org/files/2497/2005_options.gif'>
 
 ## Troubleshooting: Symbols will not load
 

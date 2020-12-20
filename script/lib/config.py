@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
+import errno
 import os
+import platform
 import sys
 
 # URL to the mips64el sysroot image.
@@ -19,27 +20,15 @@ BASE_URL = os.getenv('LIBCHROMIUMCONTENT_MIRROR') or \
 PLATFORM = {
   'cygwin': 'win32',
   'darwin': 'darwin',
-  'linux': 'linux',
   'linux2': 'linux',
   'win32': 'win32',
 }[sys.platform]
-
-LINUX_BINARIES = [
-  'electron',
-  'chrome-sandbox',
-  'libffmpeg.so',
-  'libGLESv2.so',
-  'libEGL.so',
-  'swiftshader/libGLESv2.so',
-  'swiftshader/libEGL.so',
-  'libvk_swiftshader.so'
-]
 
 verbose_mode = False
 
 
 def get_platform_key():
-  if 'MAS_BUILD' in os.environ:
+  if os.environ.has_key('MAS_BUILD'):
     return 'mas'
   else:
     return PLATFORM
@@ -58,8 +47,7 @@ def get_env_var(name):
     # TODO Remove ATOM_SHELL_* fallback values
     value = os.environ.get('ATOM_SHELL_' + name, '')
     if value:
-      print('Warning: Use $ELECTRON_' + name +
-            ' instead of $ATOM_SHELL_' + name)
+      print 'Warning: Use $ELECTRON_' + name + ' instead of $ATOM_SHELL_' + name
   return value
 
 
@@ -75,7 +63,7 @@ def s3_config():
 
 
 def enable_verbose_mode():
-  print('Running in verbose mode')
+  print 'Running in verbose mode'
   global verbose_mode
   verbose_mode = True
 

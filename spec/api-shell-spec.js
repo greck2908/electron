@@ -1,13 +1,11 @@
-const { expect } = require('chai');
-
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const http = require('http');
-const { shell } = require('electron');
+const assert = require('assert')
+const fs = require('fs')
+const path = require('path')
+const os = require('os')
+const { shell } = require('electron')
 
 describe('shell module', () => {
-  const fixtures = path.resolve(__dirname, 'fixtures');
+  const fixtures = path.resolve(__dirname, 'fixtures')
   const shortcutOptions = {
     target: 'C:\\target',
     description: 'description',
@@ -15,61 +13,59 @@ describe('shell module', () => {
     args: 'args',
     appUserModelId: 'appUserModelId',
     icon: 'icon',
-    iconIndex: 1,
-    toastActivatorClsid: '{0E3CFA27-6FEA-410B-824F-A174B6E865E5}'
-  };
+    iconIndex: 1
+  }
+
+  // (alexeykuzmin): `.skip()` in `before` doesn't work for nested `describe`s.
+  beforeEach(function () {
+    if (process.platform !== 'win32') {
+      this.skip()
+    }
+  })
 
   describe('shell.readShortcutLink(shortcutPath)', () => {
-    beforeEach(function () {
-      if (process.platform !== 'win32') this.skip();
-    });
-
     it('throws when failed', () => {
-      expect(() => {
-        shell.readShortcutLink('not-exist');
-      }).to.throw('Failed to read shortcut link');
-    });
+      assert.throws(() => {
+        shell.readShortcutLink('not-exist')
+      }, /Failed to read shortcut link/)
+    })
 
     it('reads all properties of a shortcut', () => {
-      const shortcut = shell.readShortcutLink(path.join(fixtures, 'assets', 'shortcut.lnk'));
-      expect(shortcut).to.deep.equal(shortcutOptions);
-    });
-  });
+      const shortcut = shell.readShortcutLink(path.join(fixtures, 'assets', 'shortcut.lnk'))
+      assert.deepStrictEqual(shortcut, shortcutOptions)
+    })
+  })
 
   describe('shell.writeShortcutLink(shortcutPath[, operation], options)', () => {
-    beforeEach(function () {
-      if (process.platform !== 'win32') this.skip();
-    });
-
-    const tmpShortcut = path.join(os.tmpdir(), `${Date.now()}.lnk`);
+    const tmpShortcut = path.join(os.tmpdir(), `${Date.now()}.lnk`)
 
     afterEach(() => {
-      fs.unlinkSync(tmpShortcut);
-    });
+      fs.unlinkSync(tmpShortcut)
+    })
 
     it('writes the shortcut', () => {
-      expect(shell.writeShortcutLink(tmpShortcut, { target: 'C:\\' })).to.be.true();
-      expect(fs.existsSync(tmpShortcut)).to.be.true();
-    });
+      assert.strictEqual(shell.writeShortcutLink(tmpShortcut, { target: 'C:\\' }), true)
+      assert.strictEqual(fs.existsSync(tmpShortcut), true)
+    })
 
     it('correctly sets the fields', () => {
-      expect(shell.writeShortcutLink(tmpShortcut, shortcutOptions)).to.be.true();
-      expect(shell.readShortcutLink(tmpShortcut)).to.deep.equal(shortcutOptions);
-    });
+      assert.strictEqual(shell.writeShortcutLink(tmpShortcut, shortcutOptions), true)
+      assert.deepStrictEqual(shell.readShortcutLink(tmpShortcut), shortcutOptions)
+    })
 
     it('updates the shortcut', () => {
-      expect(shell.writeShortcutLink(tmpShortcut, 'update', shortcutOptions)).to.be.false();
-      expect(shell.writeShortcutLink(tmpShortcut, 'create', shortcutOptions)).to.be.true();
-      expect(shell.readShortcutLink(tmpShortcut)).to.deep.equal(shortcutOptions);
-      const change = { target: 'D:\\' };
-      expect(shell.writeShortcutLink(tmpShortcut, 'update', change)).to.be.true();
-      expect(shell.readShortcutLink(tmpShortcut)).to.deep.equal(Object.assign(shortcutOptions, change));
-    });
+      assert.strictEqual(shell.writeShortcutLink(tmpShortcut, 'update', shortcutOptions), false)
+      assert.strictEqual(shell.writeShortcutLink(tmpShortcut, 'create', shortcutOptions), true)
+      assert.deepStrictEqual(shell.readShortcutLink(tmpShortcut), shortcutOptions)
+      const change = { target: 'D:\\' }
+      assert.strictEqual(shell.writeShortcutLink(tmpShortcut, 'update', change), true)
+      assert.deepStrictEqual(shell.readShortcutLink(tmpShortcut), Object.assign(shortcutOptions, change))
+    })
 
     it('replaces the shortcut', () => {
-      expect(shell.writeShortcutLink(tmpShortcut, 'replace', shortcutOptions)).to.be.false();
-      expect(shell.writeShortcutLink(tmpShortcut, 'create', shortcutOptions)).to.be.true();
-      expect(shell.readShortcutLink(tmpShortcut)).to.deep.equal(shortcutOptions);
+      assert.strictEqual(shell.writeShortcutLink(tmpShortcut, 'replace', shortcutOptions), false)
+      assert.strictEqual(shell.writeShortcutLink(tmpShortcut, 'create', shortcutOptions), true)
+      assert.deepStrictEqual(shell.readShortcutLink(tmpShortcut), shortcutOptions)
       const change = {
         target: 'D:\\',
         description: 'description2',
@@ -77,11 +73,10 @@ describe('shell module', () => {
         args: 'args2',
         appUserModelId: 'appUserModelId2',
         icon: 'icon2',
-        iconIndex: 2,
-        toastActivatorClsid: '{C51A3996-CAD9-4934-848B-16285D4A1496}'
-      };
-      expect(shell.writeShortcutLink(tmpShortcut, 'replace', change)).to.be.true();
-      expect(shell.readShortcutLink(tmpShortcut)).to.deep.equal(change);
-    });
-  });
-});
+        iconIndex: 2
+      }
+      assert.strictEqual(shell.writeShortcutLink(tmpShortcut, 'replace', change), true)
+      assert.deepStrictEqual(shell.readShortcutLink(tmpShortcut), change)
+    })
+  })
+})

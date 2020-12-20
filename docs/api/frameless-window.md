@@ -12,9 +12,10 @@ options on the [`BrowserWindow`](browser-window.md) class.
 To create a frameless window, you need to set `frame` to `false` in
 [BrowserWindow](browser-window.md)'s `options`:
 
+
 ```javascript
 const { BrowserWindow } = require('electron')
-const win = new BrowserWindow({ width: 800, height: 600, frame: false })
+let win = new BrowserWindow({ width: 800, height: 600, frame: false })
 win.show()
 ```
 
@@ -32,7 +33,7 @@ Results in a hidden title bar and a full size content window, yet the title bar 
 
 ```javascript
 const { BrowserWindow } = require('electron')
-const win = new BrowserWindow({ titleBarStyle: 'hidden' })
+let win = new BrowserWindow({ titleBarStyle: 'hidden' })
 win.show()
 ```
 
@@ -42,22 +43,20 @@ Results in a hidden title bar with an alternative look where the traffic light b
 
 ```javascript
 const { BrowserWindow } = require('electron')
-const win = new BrowserWindow({ titleBarStyle: 'hiddenInset' })
+let win = new BrowserWindow({ titleBarStyle: 'hiddenInset' })
 win.show()
 ```
 
 #### `customButtonsOnHover`
 
-Uses custom drawn close, and miniaturize buttons that display
-when hovering in the top left of the window. The fullscreen button
-is not available due to restrictions of frameless windows as they
-interface with Apple's macOS window masks. These custom buttons prevent
-issues with mouse events that occur with the standard window toolbar buttons.
-This option is only applicable for frameless windows.
+Uses custom drawn close, miniaturize, and fullscreen buttons that display
+when hovering in the top left of the window. These custom buttons prevent issues
+with mouse events that occur with the standard window toolbar buttons. This
+option is only applicable for frameless windows.
 
 ```javascript
 const { BrowserWindow } = require('electron')
-const win = new BrowserWindow({ titleBarStyle: 'customButtonsOnHover', frame: false })
+let win = new BrowserWindow({ titleBarStyle: 'customButtonsOnHover', frame: false })
 win.show()
 ```
 
@@ -68,7 +67,7 @@ window transparent:
 
 ```javascript
 const { BrowserWindow } = require('electron')
-const win = new BrowserWindow({ transparent: true, frame: false })
+let win = new BrowserWindow({ transparent: true, frame: false })
 win.show()
 ```
 
@@ -87,7 +86,7 @@ win.show()
 * On Linux, users have to put `--enable-transparent-visuals --disable-gpu` in
   the command line to disable GPU and allow ARGB to make transparent window,
   this is caused by an upstream bug that [alpha channel doesn't work on some
-  NVidia drivers](https://bugs.chromium.org/p/chromium/issues/detail?id=369209) on
+  NVidia drivers](https://code.google.com/p/chromium/issues/detail?id=369209) on
   Linux.
 * On Mac, the native window shadow will not be shown on a transparent window.
 
@@ -99,7 +98,7 @@ API:
 
 ```javascript
 const { BrowserWindow } = require('electron')
-const win = new BrowserWindow()
+let win = new BrowserWindow()
 win.setIgnoreMouseEvents(true)
 ```
 
@@ -111,19 +110,13 @@ optional parameter can be used to forward mouse move messages to the web page,
 allowing events such as `mouseleave` to be emitted:
 
 ```javascript
-const { ipcRenderer } = require('electron')
-const el = document.getElementById('clickThroughElement')
+let win = require('electron').remote.getCurrentWindow()
+let el = document.getElementById('clickThroughElement')
 el.addEventListener('mouseenter', () => {
-  ipcRenderer.send('set-ignore-mouse-events', true, { forward: true })
+  win.setIgnoreMouseEvents(true, { forward: true })
 })
 el.addEventListener('mouseleave', () => {
-  ipcRenderer.send('set-ignore-mouse-events', false)
-})
-
-// Main process
-const { ipcMain } = require('electron')
-ipcMain.on('set-ignore-mouse-events', (event, ...args) => {
-  BrowserWindow.fromWebContents(event.sender).setIgnoreMouseEvents(...args)
+  win.setIgnoreMouseEvents(false)
 })
 ```
 
@@ -163,7 +156,7 @@ buttons in titlebar non-draggable.
 
 ## Text selection
 
-In a frameless window the dragging behavior may conflict with selecting text.
+In a frameless window the dragging behaviour may conflict with selecting text.
 For example, when you drag the titlebar you may accidentally select the text on
 the titlebar. To prevent this, you need to disable text selection within a
 draggable area like this:

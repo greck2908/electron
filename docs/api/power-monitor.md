@@ -4,23 +4,39 @@
 
 Process: [Main](../glossary.md#main-process)
 
+You cannot require or use this module until the `ready` event of the `app`
+module is emitted.
+
+For example:
+
+```javascript
+const electron = require('electron')
+const { app } = electron
+
+app.on('ready', () => {
+  electron.powerMonitor.on('suspend', () => {
+    console.log('The system is going to sleep')
+  })
+})
+```
+
 ## Events
 
 The `powerMonitor` module emits the following events:
 
-### Event: 'suspend' _macOS_ _Windows_
+### Event: 'suspend'
 
 Emitted when the system is suspending.
 
-### Event: 'resume' _macOS_ _Windows_
+### Event: 'resume'
 
 Emitted when system is resuming.
 
-### Event: 'on-ac' _macOS_ _Windows_
+### Event: 'on-ac' _Windows_
 
 Emitted when the system changes to AC power.
 
-### Event: 'on-battery' _macOS_  _Windows_
+### Event: 'on-battery' _Windows_
 
 Emitted when system changes to battery power.
 
@@ -39,44 +55,24 @@ Emitted when the system is about to lock the screen.
 
 Emitted as soon as the systems screen is unlocked.
 
-### Event: 'user-did-become-active' _macOS_
-
-Emitted when a login session is activated. See [documentation](https://developer.apple.com/documentation/appkit/nsworkspacesessiondidbecomeactivenotification?language=objc) for more information.
-
-### Event: 'user-did-resign-active' _macOS_
-
-Emitted when a login session is deactivated. See [documentation](https://developer.apple.com/documentation/appkit/nsworkspacesessiondidresignactivenotification?language=objc) for more information.
-
 ## Methods
 
 The `powerMonitor` module has the following methods:
 
-### `powerMonitor.getSystemIdleState(idleThreshold)`
+#### `powerMonitor.querySystemIdleState(idleThreshold, callback)`
 
 * `idleThreshold` Integer
-
-Returns `String` - The system's current state. Can be `active`, `idle`, `locked` or `unknown`.
+* `callback` Function
+  * `idleState` String - Can be `active`, `idle`, `locked` or `unknown`
 
 Calculate the system idle state. `idleThreshold` is the amount of time (in seconds)
-before considered idle.  `locked` is available on supported systems only.
+before considered idle. `callback` will be called synchronously on some systems
+and with an `idleState` argument that describes the system's state. `locked` is
+available on supported systems only.
 
-### `powerMonitor.getSystemIdleTime()`
+#### `powerMonitor.querySystemIdleTime(callback)`
 
-Returns `Integer` - Idle time in seconds
+* `callback` Function
+  * `idleTime` Integer - Idle time in seconds
 
 Calculate system idle time in seconds.
-
-### `powerMonitor.isOnBatteryPower()`
-
-Returns `Boolean` - Whether the system is on battery power.
-
-To monitor for changes in this property, use the `on-battery` and `on-ac`
-events.
-
-## Properties
-
-### `powerMonitor.onBatteryPower`
-
-A `Boolean` property. True if the system is on battery power.
-
-See [`powerMonitor.isOnBatteryPower()`](#powermonitorisonbatterypower).

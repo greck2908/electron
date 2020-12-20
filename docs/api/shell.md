@@ -2,7 +2,7 @@
 
 > Manage files and URLs using their default applications.
 
-Process: [Main](../glossary.md#main-process), [Renderer](../glossary.md#renderer-process) (non-sandboxed only)
+Process: [Main](../glossary.md#main-process), [Renderer](../glossary.md#renderer-process)
 
 The `shell` module provides functions related to desktop integration.
 
@@ -14,8 +14,6 @@ const { shell } = require('electron')
 shell.openExternal('https://github.com')
 ```
 
-**Note:** While the `shell` module can be used in the renderer process, it will not function in a sandboxed renderer.
-
 ## Methods
 
 The `shell` module has the following methods:
@@ -24,36 +22,41 @@ The `shell` module has the following methods:
 
 * `fullPath` String
 
+Returns `Boolean` - Whether the item was successfully shown.
+
 Show the given file in a file manager. If possible, select the file.
 
-### `shell.openPath(path)`
+### `shell.openItem(fullPath)`
 
-* `path` String
+* `fullPath` String
 
-Returns `Promise<String>` - Resolves with a string containing the error message corresponding to the failure if a failure occurred, otherwise "".
+Returns `Boolean` - Whether the item was successfully opened.
 
 Open the given file in the desktop's default manner.
 
-### `shell.openExternal(url[, options])`
+### `shell.openExternal(url[, options, callback])`
 
-* `url` String - Max 2081 characters on windows.
+* `url` String - Max 2081 characters on windows, or the function returns false.
 * `options` Object (optional)
-  * `activate` Boolean (optional) _macOS_ - `true` to bring the opened application to the foreground. The default is `true`.
-  * `workingDirectory` String (optional) _Windows_ - The working directory.
+  * `activate` Boolean (optional) - `true` to bring the opened application to the
+    foreground. The default is `true`. _macOS_
+  * `workingDirectory` String (optional) - The working directory. _Windows_
+* `callback` Function (optional) _macOS_ - If specified will perform the open asynchronously.
+  * `error` Error
 
-Returns `Promise<void>`
+Returns `Boolean` - Whether an application was available to open the URL.
+If callback is specified, always returns true.
 
-Open the given external protocol URL in the desktop's default manner. (For example, mailto: URLs in the user's default mail agent).
+Open the given external protocol URL in the desktop's default manner. (For
+example, mailto: URLs in the user's default mail agent).
 
-### `shell.trashItem(path)`
+### `shell.moveItemToTrash(fullPath)`
 
-* `path` String - path to the item to be moved to the trash.
+* `fullPath` String
 
-Returns `Promise<void>` - Resolves when the operation has been completed.
-Rejects if there was an error while deleting the requested item.
+Returns `Boolean` - Whether the item was successfully moved to the trash.
 
-This moves a path to the OS-specific trash location (Trash on macOS, Recycle
-Bin on Windows, and a desktop-environment-specific location on Linux).
+Move the given file to trash and returns a boolean status for the operation.
 
 ### `shell.beep()`
 

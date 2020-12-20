@@ -1,4 +1,4 @@
-# Electron Documentation Style Guide
+# Electron Documentation Styleguide
 
 These are the guidelines for writing Electron documentation.
 
@@ -48,8 +48,7 @@ For API references, there are exceptions to this rule.
 * Lines should be wrapped at 80 columns.
 * No nesting lists more than 2 levels (due to the markdown renderer).
 * All `js` and `javascript` code blocks are linted with
-[standard-markdown](https://www.npmjs.com/package/standard-markdown).
-* For unordered lists, use asterisks instead of dashes
+[standard-markdown](http://npm.im/standard-markdown).
 
 ## Picking words
 
@@ -117,7 +116,7 @@ Using the `Session` and `Cookies` classes as an example:
 
 ### session.fromPartition(partition)
 
-## Static Properties
+## Properties
 
 ### session.defaultSession
 
@@ -129,7 +128,7 @@ Using the `Session` and `Cookies` classes as an example:
 
 ### Instance Methods
 
-#### `ses.getCacheSize()`
+#### `ses.getCacheSize(callback)`
 
 ### Instance Properties
 
